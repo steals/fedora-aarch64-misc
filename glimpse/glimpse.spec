@@ -24,8 +24,7 @@ BuildRequires: blueprint-compiler
 BuildRequires: gettext
 BuildRequires: pkgconfig(gtk4) >= 4.22
 BuildRequires: pkgconfig(libadwaita-1) >= 1.9
-BuildRequires: pkgconfig(gtk4-layer-shell-0)
-BuildRequires: pkgconfig(gtk4-session-lock)
+BuildRequires: pkgconfig(gtk4-layer-shell-0) >= 1.2
 BuildRequires: pkgconfig(libpulse)
 BuildRequires: pkgconfig(libpipewire-0.3)
 BuildRequires: pkgconfig(libudev)
@@ -36,7 +35,7 @@ BuildRequires: systemd-rpm-macros
 
 Requires: gtk4%{?_isa} >= 4.22
 Requires: libadwaita%{?_isa} >= 1.9
-Requires: gtk4-layer-shell%{?_isa}
+Requires: gtk4-layer-shell%{?_isa} >= 1.2
 Requires: geoclue2
 Requires: ddcutil
 Requires: pam
