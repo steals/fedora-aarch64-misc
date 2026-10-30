@@ -1,0 +1,62 @@
+name: Bump glimpse version
+
+on:
+  schedule:
+    - cron: "41 4 * * *"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Force version (without v), empty = latest release"
+        required: false
+
+permissions:
+  contents: write
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    container: fedora:latest
+    env:
+      SPEC: glimpse/glimpse.spec
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Install tools
+        run: dnf -y install git gh jq rpmdevtools copr-cli
+
+      - uses: actions/checkout@v4
+
+      - name: Resolve versions
+        id: v
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          current=$(rpmspec -q --srpm --qf '%{version}' "$SPEC")
+          latest="${{ inputs.version }}"
+          if [ -z "$latest" ]; then
+            latest=$(gh api repos/alex-oleshkevich/glimpse/releases/latest --jq .tag_name)
+            latest=${latest#v}
+          fi
+          echo "current=$current latest=$latest"
+          echo "current=$current" >> "$GITHUB_OUTPUT"
+          echo "latest=$latest" >> "$GITHUB_OUTPUT"
+
+      - name: Update spec and push
+        if: steps.v.outputs.current != steps.v.outputs.latest
+        run: |
+          v=${{ steps.v.outputs.latest }}
+          rpmdev-bumpspec -n "$v" -c "Update to $v" \
+            -u "github-actions <github-actions@users.noreply.github.com>" "$SPEC"
+          git config user.name github-actions
+          git config user.email github-actions@users.noreply.github.com
+          git commit -am "glimpse: update to $v"
+          git push
+
+      - name: Trigger COPR build
+        if: steps.v.outputs.current != steps.v.outputs.latest
+        env:
+          COPR_CONFIG: ${{ secrets.COPR_CONFIG }}
+          COPR_PROJECT: ${{ vars.COPR_PROJECT }}
+        run: |
+          mkdir -p ~/.config
+          printf '%s\n' "$COPR_CONFIG" > ~/.config/copr
+          copr-cli build-package "$COPR_PROJECT" --name glimpse \
+            --timeout 36000 --nowait
