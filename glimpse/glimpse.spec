@@ -64,6 +64,7 @@ This build does not install the niri/Hyprland portal overrides into
 %build
 export CARGO_HOME=%{_builddir}/.cargo
 export PREFIX=%{_prefix}
+export GETTEXT_SYSTEM=1
 args=()
 for b in %{binaries}; do args+=(--bin "$b"); done
 cargo build --release --locked "${args[@]}"
