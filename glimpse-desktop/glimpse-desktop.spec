@@ -3,13 +3,15 @@
 
 %global binaries glimpsectl glimpse-panel glimpse-lock glimpse-wallpaper glimpse-sunset glimpse-notifications glimpse-agents glimpse-weather glimpse-calendar glimpse-idle glimpse-lens glimpse-shot glimpse-settings-daemon glimpse-compositor-niri glimpse-compositor-hyprland
 
-Name:    glimpse
+%global upstream glimpse
+
+Name:    glimpse-desktop
 Version: 0.16.1
 Release: 1%{?dist}
 Summary: Desktop shell suite for Wayland compositors (niri, Hyprland)
 License: BSD-3-Clause
 URL:     https://github.com/alex-oleshkevich/glimpse
-Source0: %{url}/archive/v%{version}/%{name}-%{version}.tar.gz
+Source0: %{url}/archive/v%{version}/%{upstream}-%{version}.tar.gz
 
 ExclusiveArch: aarch64 x86_64
 
@@ -59,7 +61,7 @@ This build does not install the niri/Hyprland portal overrides into
 /etc/xdg-desktop-portal; reference copies live in %{_datadir}/glimpse/portals.
 
 %prep
-%autosetup -n %{name}-%{version}
+%autosetup -n %{upstream}-%{version}
 
 %build
 export CARGO_HOME=%{_builddir}/.cargo
@@ -80,9 +82,9 @@ install -Dpm0644 data/pam.d/fedora/glimpse-lock %{buildroot}%{_sysconfdir}/pam.d
 rm -f %{buildroot}%{_sysconfdir}/xdg-desktop-portal/niri-portals.conf
 rm -f %{buildroot}%{_sysconfdir}/xdg-desktop-portal/hyprland-portals.conf
 
-%find_lang %{name}
+%find_lang %{upstream}
 
-%files -f %{name}.lang
+%files -f %{upstream}.lang
 %license LICENSE
 %{_bindir}/glimpse*
 %{_userunitdir}/glimpse-*.service
@@ -104,3 +106,4 @@ rm -f %{buildroot}%{_sysconfdir}/xdg-desktop-portal/hyprland-portals.conf
 %changelog
 * Fri Oct 30 2026 Eugene <e.rusalev@gmail.com> - 0.16.1-1
 - Initial COPR packaging
+- Package renamed to glimpse-desktop (Fedora already ships an unrelated glimpse)

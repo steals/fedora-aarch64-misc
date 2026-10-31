@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     container: fedora:latest
     env:
-      SPEC: glimpse/glimpse.spec
+      SPEC: glimpse-desktop/glimpse-desktop.spec
       GH_TOKEN: ${{ github.token }}
     steps:
       - name: Install tools
@@ -58,5 +58,5 @@ jobs:
         run: |
           mkdir -p ~/.config
           printf '%s\n' "$COPR_CONFIG" > ~/.config/copr
-          copr-cli build-package "$COPR_PROJECT" --name glimpse \
+          copr-cli build-package "$COPR_PROJECT" --name glimpse-desktop \
             --timeout 36000 --nowait
