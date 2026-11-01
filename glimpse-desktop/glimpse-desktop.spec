@@ -6,7 +6,7 @@
 %global upstream glimpse
 
 Name:    glimpse-desktop
-Version: 0.16.1
+Version: 0.17.0
 Release: 1%{?dist}
 Summary: Desktop shell suite for Wayland compositors (niri, Hyprland)
 License: BSD-3-Clause
@@ -104,6 +104,9 @@ rm -f %{buildroot}%{_sysconfdir}/xdg-desktop-portal/hyprland-portals.conf
 %config(noreplace) %{_sysconfdir}/geoclue/conf.d/glimpse.conf
 
 %changelog
+* Sun Nov 01 2026 github-actions <github-actions@users.noreply.github.com> - 0.17.0-1
+- Update to 0.17.0
+
 * Fri Oct 30 2026 Eugene <e.rusalev@gmail.com> - 0.16.1-1
 - Initial COPR packaging
 - Package renamed to glimpse-desktop (Fedora already ships an unrelated glimpse)
