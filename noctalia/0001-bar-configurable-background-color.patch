@@ -1,0 +1,135 @@
+From 8e983d6ad7a8fdb2856889863715d91fe142d3d2 Mon Sep 17 00:00:00 2001
+From: Eugene <eugene@localhost>
+Date: Sun, 1 Nov 2026 09:41:39 +0300
+Subject: [PATCH] bar: configurable background color
+
+Add [bar.<n>] background (color role or hex, default "surface"),
+overridable per monitor. background_opacity still scales its alpha.
+---
+ src/config/config_export.cpp        |  2 ++
+ src/config/config_overrides.cpp     |  3 +++
+ src/config/config_service.cpp       |  2 ++
+ src/config/config_types.h           |  2 ++
+ src/config/schema/config_schema.cpp |  2 ++
+ src/shell/bar/bar.cpp               | 11 +++++++++--
+ 6 files changed, 20 insertions(+), 2 deletions(-)
+
+diff --git a/src/config/config_export.cpp b/src/config/config_export.cpp
+index 2d9cc49..d21adab 100644
+--- a/src/config/config_export.cpp
++++ b/src/config/config_export.cpp
+@@ -155,6 +155,8 @@ namespace config_export {
+         resolved.backgroundOpacity = *ovr.backgroundOpacity;
+       if (ovr.compositorBlur)
+         resolved.compositorBlur = *ovr.compositorBlur;
++      if (ovr.background)
++        resolved.background = *ovr.background;
+       if (ovr.border)
+         resolved.border = *ovr.border;
+       if (ovr.borderWidth)
+diff --git a/src/config/config_overrides.cpp b/src/config/config_overrides.cpp
+index 6307cbb..a8ce9d5 100644
+--- a/src/config/config_overrides.cpp
++++ b/src/config/config_overrides.cpp
+@@ -190,6 +190,9 @@ namespace {
+     if (ovr.compositorBlur) {
+       resolved.compositorBlur = *ovr.compositorBlur;
+     }
++    if (ovr.background) {
++      resolved.background = *ovr.background;
++    }
+     if (ovr.border) {
+       resolved.border = *ovr.border;
+     }
+diff --git a/src/config/config_service.cpp b/src/config/config_service.cpp
+index c211eb2..c1fc95e 100644
+--- a/src/config/config_service.cpp
++++ b/src/config/config_service.cpp
+@@ -995,6 +995,8 @@ BarConfig ConfigService::resolveForOutput(const BarConfig& base, const WaylandOu
+       resolved.backgroundOpacity = *ovr.backgroundOpacity;
+     if (ovr.compositorBlur)
+       resolved.compositorBlur = *ovr.compositorBlur;
++    if (ovr.background)
++      resolved.background = *ovr.background;
+     if (ovr.border)
+       resolved.border = *ovr.border;
+     if (ovr.borderWidth)
+diff --git a/src/config/config_types.h b/src/config/config_types.h
+index 881cecf..a584304 100644
+--- a/src/config/config_types.h
++++ b/src/config/config_types.h
+@@ -81,6 +81,7 @@ struct BarMonitorOverride {
+   std::optional<std::int32_t> thickness;
+   std::optional<float> backgroundOpacity;
+   std::optional<bool> compositorBlur;
++  std::optional<ColorSpec> background;
+   std::optional<ColorSpec> border;
+   std::optional<float> borderWidth;
+   std::optional<std::int32_t> radius;
+@@ -157,6 +158,7 @@ struct BarConfig {
+   float backgroundOpacity = 1.0F;
+   bool compositorBlur = true;
+   // Inside outline for the bar background; attached panels inherit the resolved values.
++  ColorSpec background = colorSpecFromRole(ColorRole::Surface);
+   ColorSpec border = colorSpecFromRole(ColorRole::OutlineVariant);
+   float borderWidth = 0.0F;
+   std::int32_t radius = static_cast<std::int32_t>(Style::radiusXl);
+diff --git a/src/config/schema/config_schema.cpp b/src/config/schema/config_schema.cpp
+index 65af38c..30b76ec 100644
+--- a/src/config/schema/config_schema.cpp
++++ b/src/config/schema/config_schema.cpp
+@@ -2563,6 +2563,7 @@ namespace noctalia::config::schema {
+         field(&BarConfig::thickness, "thickness", kBarThicknessRange),
+         field(&BarConfig::backgroundOpacity, "background_opacity", kBarOpacityRange),
+         field(&BarConfig::compositorBlur, "compositor_blur"),
++        colorField(&BarConfig::background, "background"),
+         colorField(&BarConfig::border, "border"),
+         field(&BarConfig::borderWidth, "border_width", kBarBorderWidthRange),
+         barRadiusField(),
+@@ -2642,6 +2643,7 @@ namespace noctalia::config::schema {
+         optionalIntField(&BarMonitorOverride::thickness, "thickness", kBarThicknessRange),
+         optionalFloatField(&BarMonitorOverride::backgroundOpacity, "background_opacity", kBarOpacityRange),
+         optionalBoolField(&BarMonitorOverride::compositorBlur, "compositor_blur"),
++        optionalColorField(&BarMonitorOverride::background, "background"),
+         optionalColorField(&BarMonitorOverride::border, "border"),
+         optionalFloatField(&BarMonitorOverride::borderWidth, "border_width", kBarBorderWidthRange),
+         optionalIntField(&BarMonitorOverride::radius, "radius", kBarRadiusRange),
+diff --git a/src/shell/bar/bar.cpp b/src/shell/bar/bar.cpp
+index bfcd7da..81f6990 100644
+--- a/src/shell/bar/bar.cpp
++++ b/src/shell/bar/bar.cpp
+@@ -40,6 +40,13 @@
+ 
+ namespace {
+ 
++  // Bar fill: configured background color scaled by background_opacity.
++  Color barBackgroundColor(const BarConfig& cfg) noexcept {
++    Color c = resolveColorSpec(cfg.background);
++    c.a *= std::clamp(cfg.backgroundOpacity, 0.0F, 1.0F);
++    return c;
++  }
++
+   constexpr Logger kLog("bar");
+   constexpr std::chrono::milliseconds kWorkspaceRevealDebounce{80};
+   constexpr std::chrono::milliseconds kWorkspacePeekHold{450};
+@@ -3199,7 +3206,7 @@ void Bar::applyBackgroundPalette(BarInstance& instance) {
+     return;
+   }
+   auto style = instance.bg->style();
+-  style.fill = colorForRole(ColorRole::Surface, instance.barConfig.backgroundOpacity);
++  style.fill = barBackgroundColor(instance.barConfig);
+   style.border = resolveColorSpec(instance.barConfig.border);
+   style.borderWidth = instance.barConfig.borderWidth;
+   instance.bg->setStyle(style);
+@@ -3530,7 +3537,7 @@ void Bar::buildScene(BarInstance& instance, std::uint32_t width, std::uint32_t h
+   // draws only outside the rect, so any size mismatch is visible at corners.
+   if (instance.bg != nullptr) {
+     const RoundedRectStyle bgStyle{
+-        .fill = colorForRole(ColorRole::Surface, instance.barConfig.backgroundOpacity),
++        .fill = barBackgroundColor(instance.barConfig),
+         .border = resolveColorSpec(instance.barConfig.border),
+         .fillMode = FillMode::Solid,
+         .corners = concave.corners,
+-- 
+2.43.0
+
