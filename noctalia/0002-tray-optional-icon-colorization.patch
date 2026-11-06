@@ -1,0 +1,108 @@
+From e813413f9c3074b82a9e95bd66787e0e4e206c30 Mon Sep 17 00:00:00 2001
+From: Eugene <e.rusalev@gmail.com>
+Date: Fri, 6 Nov 2026 12:05:50 +0300
+Subject: [PATCH] tray: optional icon colorization
+
+Add [widget.tray] colorize (default false): recolor non-symbolic tray
+icons and pixmaps with the bar icon color instead of the global
+[shell] app_icon_colorize tint.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01NgUkH8J1TJhk1wbHPvtHVp
+---
+ assets/translations/en.json                      | 4 ++++
+ assets/translations/ru.json                      | 4 ++++
+ src/shell/bar/widgets/tray_widget.cpp            | 4 ++++
+ src/shell/bar/widgets/tray_widget.h              | 2 ++
+ src/shell/bar/widgets/tray_widget_definition.cpp | 3 +++
+ 5 files changed, 17 insertions(+)
+
+diff --git a/assets/translations/en.json b/assets/translations/en.json
+index da34140..8484415 100644
+--- a/assets/translations/en.json
++++ b/assets/translations/en.json
+@@ -4563,6 +4563,10 @@
+           "description": "Second gradient color in the visualizer",
+           "label": "Color 2"
+         },
++        "colorize": {
++          "description": "Recolor non-symbolic tray icons and pixmaps with the bar icon color",
++          "label": "Colorize Icons"
++        },
+         "custom-image": {
+           "description": "Path to a custom image; leave empty to use the icon glyph",
+           "dialog-title": "Select Custom Image",
+diff --git a/assets/translations/ru.json b/assets/translations/ru.json
+index 5d8b774..90c507d 100644
+--- a/assets/translations/ru.json
++++ b/assets/translations/ru.json
+@@ -4563,6 +4563,10 @@
+           "description": "Второй градиентный цвет в визуализаторе",
+           "label": "Цвет №2"
+         },
++        "colorize": {
++          "description": "Перекрашивать несимвольные значки трея и растровые изображения в цвет значков панели",
++          "label": "Перекрашивать значки"
++        },
+         "custom-image": {
+           "description": "Путь к пользовательскому изображению; оставьте пустым, чтобы использовать глиф значка",
+           "dialog-title": "Выберите собственное изображение",
+diff --git a/src/shell/bar/widgets/tray_widget.cpp b/src/shell/bar/widgets/tray_widget.cpp
+index 7805f4e..c592b5b 100644
+--- a/src/shell/bar/widgets/tray_widget.cpp
++++ b/src/shell/bar/widgets/tray_widget.cpp
+@@ -166,6 +166,7 @@ namespace {
+ TrayWidget::TrayWidget(ConfigService& config, TrayService* tray, Options options)
+     : m_config(config), m_tray(tray), m_hiddenItems(std::move(options.hiddenItems)),
+       m_pinnedItems(std::move(options.pinnedItems)), m_hidePassive(options.hidePassive),
++      m_colorize(options.colorize),
+       m_drawerMode(options.drawerMode), m_itemActivated(std::move(options.itemActivated)),
+       m_barPosition(std::move(options.barPosition)), m_panelGridMode(options.panelGridMode),
+       m_panelGridColumns(std::clamp<std::size_t>(options.panelGridColumns, 1U, 5U)),
+@@ -205,6 +206,9 @@ float TrayWidget::resolvedInlineEntryGap() const {
+ }
+ 
+ std::optional<ColorSpec> TrayWidget::currentAppIconColorizeTint() const {
++  if (m_colorize) {
++    return widgetIconColorOr(colorSpecFromRole(ColorRole::OnSurface));
++  }
+   return effectiveShellAppIconColorizationTint(m_config.config().shell);
+ }
+ 
+diff --git a/src/shell/bar/widgets/tray_widget.h b/src/shell/bar/widgets/tray_widget.h
+index 28b6400..b037c52 100644
+--- a/src/shell/bar/widgets/tray_widget.h
++++ b/src/shell/bar/widgets/tray_widget.h
+@@ -28,6 +28,7 @@ public:
+     std::vector<std::string> hiddenItems;
+     std::vector<std::string> pinnedItems;
+     bool hidePassive = true;
++    bool colorize = false;
+     bool drawerMode = false;
+     std::function<void()> itemActivated;
+     std::string barPosition = "top";
+@@ -86,6 +87,7 @@ private:
+   std::vector<std::string> m_hiddenItems;
+   std::vector<std::string> m_pinnedItems;
+   bool m_hidePassive = true;
++  bool m_colorize = false;
+   std::vector<Image*> m_loadedImages;
+   std::vector<Image*> m_colorizedAppIcons;
+   std::unordered_map<std::string, std::size_t> m_initialPixmaps;
+diff --git a/src/shell/bar/widgets/tray_widget_definition.cpp b/src/shell/bar/widgets/tray_widget_definition.cpp
+index 9f64c1f..ed2aa55 100644
+--- a/src/shell/bar/widgets/tray_widget_definition.cpp
++++ b/src/shell/bar/widgets/tray_widget_definition.cpp
+@@ -19,6 +19,9 @@ const noctalia::bar::WidgetDefinition<TrayWidget::Options, TrayWidgetDefinitionC
+               field<&Options::hidePassive>({
+                   .key = "hide_passive",
+               }),
++              field<&Options::colorize>({
++                  .key = "colorize",
++              }),
+               field<&Options::matchAdjacentSpacing>({
+                   .key = "match_adjacent_spacing",
+               }),
+-- 
+2.43.0
+
