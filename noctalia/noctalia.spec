@@ -1,8 +1,8 @@
 %global appid dev.noctalia.Noctalia
 
 Name:    noctalia
-Version: 5.4.1
-Release: 2%{?dist}.barbg1
+Version: 5.5.0
+Release: 1%{?dist}.barbg1
 Summary: A sleek, customizable desktop shell crafted for Wayland
 # noctalia, fzy, luau: MIT; material-color-utilities: Apache-2.0; wuffs: Apache-2.0 OR MIT
 License: MIT AND Apache-2.0 AND (Apache-2.0 OR MIT)
@@ -11,8 +11,6 @@ Source0: %{url}/archive/v%{version}/%{name}-%{version}.tar.gz
 
 # Configurable bar background: [bar.<n>] background = "<role>|#hex"
 Patch0:  0001-bar-configurable-background-color.patch
-# Tray icon colorization: [widget.tray] colorize = true
-Patch1:  0002-tray-optional-icon-colorization.patch
 
 ExclusiveArch: aarch64 x86_64
 
@@ -80,9 +78,8 @@ Provides: bundled(wuffs) = 0.4.0~alpha.9
 Noctalia is a Wayland desktop shell: bars, dock, launcher, notifications,
 lock screen, wallpaper and settings, rendered with OpenGL ES.
 
-This build carries local patches: a configurable bar background color
-([bar.<n>] background, also per monitor) and optional tray icon
-colorization ([widget.tray] colorize).
+This build carries a local patch: a configurable bar background color
+([bar.<n>] background, also per monitor).
 
 %prep
 %autosetup -p1
@@ -106,7 +103,7 @@ desktop-file-validate %{buildroot}%{_datadir}/applications/%{appid}.Annotator.de
 %license third_party/fzy/LICENSE
 %license third_party/luau/LICENSE.txt
 %license third_party/material_color_utilities/LICENSE
-%license third_party/wuffs/LICENSE-APACHE third_party/wuffs/LICENSE-MIT
+%license lib/third_party/wuffs/LICENSE-APACHE lib/third_party/wuffs/LICENSE-MIT
 %doc README.md
 %{_bindir}/noctalia
 %{_datadir}/noctalia/
@@ -115,6 +112,11 @@ desktop-file-validate %{buildroot}%{_datadir}/applications/%{appid}.Annotator.de
 %{_datadir}/icons/hicolor/scalable/apps/noctalia.svg
 
 %changelog
+* Sat Nov 14 2026 Eugene <e.rusalev@gmail.com> - 5.5.0-1.barbg1
+- Update to 5.5.0
+- Rebase bar background patch (schema moved to config_schema_bar.cpp)
+- Drop tray colorization patch: upstream [widget.tray] colorize_icons
+
 * Fri Nov 06 2026 Eugene <e.rusalev@gmail.com> - 5.4.1-2.barbg1
 - Add optional tray icon colorization (local patch)
 
