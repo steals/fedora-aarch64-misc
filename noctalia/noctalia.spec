@@ -2,7 +2,7 @@
 
 Name:    noctalia
 Version: 5.5.0
-Release: 1%{?dist}.barbg1
+Release: 901%{?dist}.barbg1
 Summary: A sleek, customizable desktop shell crafted for Wayland
 # noctalia, fzy, luau: MIT; material-color-utilities: Apache-2.0; wuffs: Apache-2.0 OR MIT
 License: MIT AND Apache-2.0 AND (Apache-2.0 OR MIT)
@@ -63,11 +63,14 @@ Requires: hicolor-icon-theme
 Requires: pipewire
 Requires: wireplumber
 Requires: git-core
+Requires: sound-theme-freedesktop
 Recommends: upower
 Recommends: power-profiles-daemon
 Recommends: ddcutil
-Recommends: sound-theme-freedesktop
-Recommends: libheif
+# Secret Service backend for libsecret
+Recommends: (oo7-daemon or gnome-keyring or kf6-kwallet)
+# dlopen()ed for HEIF/AVIF decoding
+Recommends: libheif.so.1()(%{__isa_bits}bit)
 
 Provides: bundled(fzy) = 1.1
 Provides: bundled(luau) = 0.742
@@ -94,6 +97,12 @@ This build carries a local patch: a configurable bar background color
 %install
 %meson_install
 
+noctalia=%{buildroot}%{_bindir}/noctalia
+install -d %{buildroot}%{bash_completions_dir} %{buildroot}%{fish_completions_dir} %{buildroot}%{zsh_completions_dir}
+$noctalia completions bash > %{buildroot}%{bash_completions_dir}/noctalia
+$noctalia completions fish > %{buildroot}%{fish_completions_dir}/noctalia.fish
+$noctalia completions zsh  > %{buildroot}%{zsh_completions_dir}/_noctalia
+
 %check
 desktop-file-validate %{buildroot}%{_datadir}/applications/%{appid}.desktop
 desktop-file-validate %{buildroot}%{_datadir}/applications/%{appid}.Annotator.desktop
@@ -101,17 +110,28 @@ desktop-file-validate %{buildroot}%{_datadir}/applications/%{appid}.Annotator.de
 %files
 %license LICENSE
 %license third_party/fzy/LICENSE
-%license third_party/luau/LICENSE.txt
+%license third_party/luau/LICENSE.txt third_party/luau/lua_LICENSE.txt
 %license third_party/material_color_utilities/LICENSE
 %license lib/third_party/wuffs/LICENSE-APACHE lib/third_party/wuffs/LICENSE-MIT
+%license lib/assets/fonts/tabler-icons-license.txt
 %doc README.md
 %{_bindir}/noctalia
 %{_datadir}/noctalia/
 %{_datadir}/applications/%{appid}.desktop
 %{_datadir}/applications/%{appid}.Annotator.desktop
 %{_datadir}/icons/hicolor/scalable/apps/noctalia.svg
+%{bash_completions_dir}/noctalia
+%{fish_completions_dir}/noctalia.fish
+%{zsh_completions_dir}/_noctalia
 
 %changelog
+* Sat Nov 14 2026 Eugene <e.rusalev@gmail.com> - 5.5.0-901.barbg1
+- Bump release to 9xx so the COPR build outranks Fedora's noctalia
+- Ship bash/fish/zsh completions
+- Require sound-theme-freedesktop, recommend a Secret Service backend,
+  recommend libheif by soname
+- Add luau lua and tabler icons licenses
+
 * Sat Nov 14 2026 Eugene <e.rusalev@gmail.com> - 5.5.0-1.barbg1
 - Update to 5.5.0
 - Rebase bar background patch (schema moved to config_schema_bar.cpp)
