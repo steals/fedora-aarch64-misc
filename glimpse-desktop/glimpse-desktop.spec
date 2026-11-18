@@ -6,7 +6,7 @@
 %global upstream glimpse
 
 Name:    glimpse-desktop
-Version: 0.17.1
+Version: 0.18.0
 Release: 1%{?dist}
 Summary: Desktop shell suite for Wayland compositors (niri, Hyprland)
 License: BSD-3-Clause
@@ -104,6 +104,9 @@ rm -f %{buildroot}%{_sysconfdir}/xdg-desktop-portal/hyprland-portals.conf
 %config(noreplace) %{_sysconfdir}/geoclue/conf.d/glimpse.conf
 
 %changelog
+* Wed Nov 18 2026 github-actions <github-actions@users.noreply.github.com> - 0.18.0-1
+- Update to 0.18.0
+
 * Tue Nov 17 2026 github-actions <github-actions@users.noreply.github.com> - 0.17.1-1
 - Update to 0.17.1
 
